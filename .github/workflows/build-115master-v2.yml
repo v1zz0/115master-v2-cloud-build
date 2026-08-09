@@ -35,27 +35,55 @@ jobs:
           node <<'NODE'
           const fs = require('node:fs')
 
-          const file = 'apps/monkey/src/components/XPlayer/hooks/playerCore/useCatchVideo.ts'
-          const source = fs.readFileSync(file, 'utf8')
-
-          const before = `    if (metadata.processingDuration === undefined) {
-                errCount++`
-
-          const after = `    const isFirefox = navigator.userAgent.toLowerCase().includes('firefox')
-              if (isFirefox) {
-                logger.warn('Firefox does not provide reliable video frame timing metadata; ignore this frame-drop probe.', metadata)
-                checkDroppedFrames()
-                return
-              }
-
-              if (metadata.processingDuration === undefined) {
-                errCount++`
-
-          if (!source.includes(before)) {
-            throw new Error('Firefox playback patch target not found')
+          function replaceOnce(file, before, after) {
+            const source = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n')
+            if (!source.includes(before)) {
+              throw new Error(`Firefox playback patch target not found in ${file}`)
+            }
+            fs.writeFileSync(file, source.replace(before, after))
           }
 
-          fs.writeFileSync(file, source.replace(before, after))
+          function replacePattern(file, pattern, after) {
+            const source = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n')
+            if (!pattern.test(source)) {
+              throw new Error(`Firefox playback patch target not found in ${file}`)
+            }
+            fs.writeFileSync(file, source.replace(pattern, after))
+          }
+
+          replacePattern(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useCatchVideo.ts',
+            /    if \(metadata\.processingDuration === undefined\) \{\r?\n      errCount\+\+[\s\S]*?\r?\n    \}\r?\n\r?\n    checkDroppedFrames\(\)/,
+            [
+              '    if (metadata.processingDuration === undefined) {',
+              "      logger.warn('Video frame processingDuration is unavailable; disable the unreliable frame-drop probe.', metadata)",
+              '      requestId = null',
+              '      return',
+              '    }',
+              '',
+              '    errCount = 0',
+              '    checkDroppedFrames()',
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/useSources.ts',
+            [
+              '      ctx.eventMitt.on(EVENTS.ERROR, ([_, err]) => {',
+              '        if (err === VIDEO_CATCH_ERROES.VIDEO_TRACK_LOSS) {',
+            ].join('\n'),
+            [
+              '      ctx.eventMitt.on(EVENTS.ERROR, ([_, err]) => {',
+              "        const isFirefox = navigator.userAgent.toLowerCase().includes('firefox')",
+              "          || CSS.supports('-moz-appearance', 'none')",
+              '        if (isFirefox && err === VIDEO_CATCH_ERROES.VIDEO_FRAMED_DROPPED) {',
+              "          logger.warn('Ignore Firefox frame-drop false positive')",
+              '          return',
+              '        }',
+              '',
+              '        if (err === VIDEO_CATCH_ERROES.VIDEO_TRACK_LOSS) {',
+            ].join('\n'),
+          )
 
           NODE
 

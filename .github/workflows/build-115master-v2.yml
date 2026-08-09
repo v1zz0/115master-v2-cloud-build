@@ -52,6 +52,49 @@ jobs:
           }
 
           replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            "const CDN_URL_WASM = `${CDN_BASE_URL}/gh/zhaohappy/libmedia@latest/dist`",
+            "const CDN_URL_WASM = `${CDN_BASE_URL}/gh/zhaohappy/libmedia@v1.2.0/dist`",
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            '  enableHardware: true,',
+            '  enableHardware: false,',
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            '  enableWebCodecs: true,',
+            '  enableWebCodecs: false,',
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            '  enableWebGPU: true,',
+            '  enableWebGPU: false,',
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            '  enableWorker: true,',
+            '  enableWorker: false,',
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            [
+              "          pkgName: '@libmedia/avplayer',",
+              "          path: 'dist/esm/avplayer.js',",
+            ].join('\n'),
+            [
+              "          pkgName: '@libmedia/avplayer',",
+              "          version: '1.2.2',",
+              "          path: 'dist/esm/avplayer.js',",
+            ].join('\n'),
+          )
+
+          replaceOnce(
             'apps/monkey/src/components/XPlayer/hooks/playerCore/useCatchVideo.ts',
             [
               '    if (!el)',
@@ -201,6 +244,27 @@ jobs:
               '        }',
               '',
               '        if (err === VIDEO_CATCH_ERROES.VIDEO_TRACK_LOSS) {',
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/useSources.ts',
+            [
+              '    catch (error) {',
+              '      if (error instanceof Error || error instanceof MediaError) {',
+              '        if (hlsSource && playerCore?.value?.type !== PlayerCoreType.Hls) {',
+            ].join('\n'),
+            [
+              '    catch (error) {',
+              '      if (error instanceof Error || error instanceof MediaError) {',
+              "        if (source.displayQuality === 'Ultra') {",
+              "          logger.error('Firefox Ultra compatibility player failed', error)",
+              '          if (playerCore.value)',
+              '            playerCore.value.loadError = error',
+              '          return',
+              '        }',
+              '',
+              '        if (hlsSource && playerCore?.value?.type !== PlayerCoreType.Hls) {',
             ].join('\n'),
           )
 

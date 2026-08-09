@@ -3,6 +3,9 @@ name: Build 115Master v2
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -57,6 +60,50 @@ jobs:
 
       - name: Build userscript
         run: pnpm build
+
+      - name: Prepare installable userscript
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs')
+
+          const version = `2.0.${process.env.GITHUB_RUN_NUMBER}`
+          const baseUrl = `https://raw.githubusercontent.com/${process.env.GITHUB_REPOSITORY}/published`
+          const files = [
+            'apps/monkey/dist/115master.user.js',
+            'apps/monkey/dist/115master.meta.js',
+          ]
+
+          for (const file of files) {
+            let content = fs.readFileSync(file, 'utf8')
+            content = content.replace(/^\/\/ @version\s+.*$/m, `// @version      ${version}`)
+            content = content.replace(
+              /^\/\/ @downloadURL\s+.*$/m,
+              `// @downloadURL  ${baseUrl}/115master.user.js`,
+            )
+            content = content.replace(
+              /^\/\/ @updateURL\s+.*$/m,
+              `// @updateURL    ${baseUrl}/115master.meta.js`,
+            )
+            fs.writeFileSync(file, content)
+          }
+          NODE
+
+      - name: Publish installable userscript
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir publish
+          cp apps/monkey/dist/115master.user.js publish/
+          cp apps/monkey/dist/115master.meta.js publish/
+          cd publish
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b published
+          git add 115master.user.js 115master.meta.js
+          git commit -m "Publish userscript build ${GITHUB_RUN_NUMBER}"
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin published
 
       - name: Upload userscript artifact
         uses: actions/upload-artifact@v4

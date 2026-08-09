@@ -2,6 +2,9 @@ name: Build 115Master v2
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -39,8 +42,8 @@ jobs:
                 errCount++`
 
           const after = `    const isFirefox = navigator.userAgent.toLowerCase().includes('firefox')
-              if (isFirefox && metadata.processingDuration === undefined) {
-                logger.warn('Firefox does not provide reliable processingDuration metadata; ignore this frame-drop probe.', metadata)
+              if (isFirefox) {
+                logger.warn('Firefox does not provide reliable video frame timing metadata; ignore this frame-drop probe.', metadata)
                 checkDroppedFrames()
                 return
               }
@@ -54,25 +57,6 @@ jobs:
 
           fs.writeFileSync(file, source.replace(before, after))
 
-          const nativeFile = 'apps/monkey/src/components/XPlayer/hooks/playerCore/useNativePlayerCore.ts'
-          const nativeSource = fs.readFileSync(nativeFile, 'utf8')
-          const nativeBefore = `  useCatchVideoFramedDropped(renderElementRef, (error) => {
-    eventMitt.emit(EVENTS.ERROR, [_ctx, error])
-  })`
-          const nativeAfter = `  useCatchVideoFramedDropped(renderElementRef, (error) => {
-    if (navigator.userAgent.toLowerCase().includes('firefox')) {
-      _ctx.logger.warn('Ignore Firefox frame-drop probe error:', error)
-      return
-    }
-
-    eventMitt.emit(EVENTS.ERROR, [_ctx, error])
-  })`
-
-          if (!nativeSource.includes(nativeBefore)) {
-            throw new Error('Firefox native frame-drop suppression target not found')
-          }
-
-          fs.writeFileSync(nativeFile, nativeSource.replace(nativeBefore, nativeAfter))
           NODE
 
       - name: Install dependencies

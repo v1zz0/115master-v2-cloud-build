@@ -88,6 +88,49 @@ jobs:
           )
 
           replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            [
+              '  const getPreferredAudioStream = (streams: Stream[]) => {',
+              '    return streams.find((stream) => {',
+              '      return (',
+              "        stream.mediaType === 'Audio'",
+              '        && stream.codecparProxy.chLayout.nbChannels <= 8',
+              "        && stream.metadata.language === 'eng'",
+              '      )',
+              '    })',
+              '  }',
+            ].join('\n'),
+            [
+              '  const getPreferredAudioStream = (streams: Stream[]) => {',
+              '    const compatibleAudioStreams = streams.filter((stream) => {',
+              '      return (',
+              "        stream.mediaType === 'Audio'",
+              '        && stream.codecparProxy.chLayout.nbChannels <= 8',
+              '        && isSupportStream(stream)',
+              '      )',
+              '    })',
+              '',
+              '    return compatibleAudioStreams.find(',
+              "      stream => stream.metadata.language === 'eng',",
+              '    ) ?? compatibleAudioStreams[0]',
+              '  }',
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            [
+              '      state.muted.value = muted',
+              '      player.setVolume(muted ? 0 : 100)',
+            ].join('\n'),
+            [
+              '      state.muted.value = muted',
+              '      const volume = (state.volume.value / 100) * 3',
+              '      player.setVolume(muted ? 0 : volume)',
+            ].join('\n'),
+          )
+
+          replaceOnce(
             'apps/monkey/src/components/XPlayer/hooks/useSources.ts',
             [
               '  const getDefaultPlayerCore = (source: VideoSource) => {',

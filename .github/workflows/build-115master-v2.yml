@@ -174,9 +174,7 @@ jobs:
             ].join('\n'),
             [
               '  const getDefaultPlayerCore = (source: VideoSource) => {',
-              "    const isFirefox = navigator.userAgent.toLowerCase().includes('firefox')",
-              "      || CSS.supports('-moz-appearance', 'none')",
-              "    if (isFirefox && source.displayQuality === 'Ultra') {",
+              "    if (source.displayQuality === 'Ultra') {",
               '      return PlayerCoreType.AvPlayer',
               '    }',
               "    if (source.type === 'hls') {",

@@ -90,6 +90,23 @@ jobs:
           replaceOnce(
             'apps/monkey/src/components/XPlayer/hooks/useSources.ts',
             [
+              '  const getDefaultPlayerCore = (source: VideoSource) => {',
+              "    if (source.type === 'hls') {",
+            ].join('\n'),
+            [
+              '  const getDefaultPlayerCore = (source: VideoSource) => {',
+              "    const isFirefox = navigator.userAgent.toLowerCase().includes('firefox')",
+              "      || CSS.supports('-moz-appearance', 'none')",
+              "    if (isFirefox && source.displayQuality === 'Ultra') {",
+              '      return PlayerCoreType.AvPlayer',
+              '    }',
+              "    if (source.type === 'hls') {",
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/useSources.ts',
+            [
               '      ctx.eventMitt.on(EVENTS.ERROR, ([_, err]) => {',
               '        if (err === VIDEO_CATCH_ERROES.VIDEO_TRACK_LOSS) {',
             ].join('\n'),

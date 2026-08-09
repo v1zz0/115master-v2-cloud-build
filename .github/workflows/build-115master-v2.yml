@@ -131,6 +131,42 @@ jobs:
           )
 
           replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            [
+              '        player.on(AVPlayerEvents.PAUSED, () => {',
+              '          ctx.eventMitt.emit(EVENTS.PAUSED, ctx)',
+              '          state.paused.value = true',
+              '        })',
+              '        player.on(AVPlayerEvents.LOADED, () => {',
+            ].join('\n'),
+            [
+              '        player.on(AVPlayerEvents.PAUSED, () => {',
+              '          ctx.eventMitt.emit(EVENTS.PAUSED, ctx)',
+              '          state.paused.value = true',
+              '        })',
+              '        player.on(AVPlayerEvents.RESUME, () => {',
+              '          state.isSuspended.value = true',
+              '        })',
+              '        player.on(AVPlayerEvents.AUDIO_CONTEXT_RUNNING, () => {',
+              '          state.isSuspended.value = false',
+              '        })',
+              '        player.on(AVPlayerEvents.LOADED, () => {',
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            [
+              '      await player.resume()',
+              '      state.isSuspended.value = false',
+            ].join('\n'),
+            [
+              '      await player.resume()',
+              '      state.isSuspended.value = player.isSuspended()',
+            ].join('\n'),
+          )
+
+          replaceOnce(
             'apps/monkey/src/components/XPlayer/hooks/useSources.ts',
             [
               '  const getDefaultPlayerCore = (source: VideoSource) => {',

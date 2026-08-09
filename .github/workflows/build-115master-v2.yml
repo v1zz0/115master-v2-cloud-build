@@ -51,6 +51,27 @@ jobs:
             fs.writeFileSync(file, source.replace(pattern, after))
           }
 
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useCatchVideo.ts',
+            [
+              '    if (!el)',
+              '      return',
+              '',
+              '    defer(() => {',
+            ].join('\n'),
+            [
+              '    if (!el)',
+              '      return',
+              '',
+              "    const isFirefox = navigator.userAgent.toLowerCase().includes('firefox')",
+              "      || CSS.supports('-moz-appearance', 'none')",
+              '    if (isFirefox)',
+              '      return',
+              '',
+              '    defer(() => {',
+            ].join('\n'),
+          )
+
           replacePattern(
             'apps/monkey/src/components/XPlayer/hooks/playerCore/useCatchVideo.ts',
             /    if \(metadata\.processingDuration === undefined\) \{\r?\n      errCount\+\+[\s\S]*?\r?\n    \}\r?\n\r?\n    checkDroppedFrames\(\)/,
@@ -76,8 +97,12 @@ jobs:
               '      ctx.eventMitt.on(EVENTS.ERROR, ([_, err]) => {',
               "        const isFirefox = navigator.userAgent.toLowerCase().includes('firefox')",
               "          || CSS.supports('-moz-appearance', 'none')",
-              '        if (isFirefox && err === VIDEO_CATCH_ERROES.VIDEO_FRAMED_DROPPED) {',
-              "          logger.warn('Ignore Firefox frame-drop false positive')",
+              '        const isUnreliableFirefoxDiagnostic = isFirefox && (',
+              '          err === VIDEO_CATCH_ERROES.VIDEO_TRACK_LOSS',
+              '          || err === VIDEO_CATCH_ERROES.VIDEO_FRAMED_DROPPED',
+              '        )',
+              '        if (isUnreliableFirefoxDiagnostic) {',
+              "          logger.warn('Ignore unreliable Firefox video diagnostic', err)",
               '          return',
               '        }',
               '',

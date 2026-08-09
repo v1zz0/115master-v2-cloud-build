@@ -1,0 +1,39 @@
+name: Build 115Master v2
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout upstream v2
+        uses: actions/checkout@v4
+        with:
+          repository: cbingb666/115master
+          ref: v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.9 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build userscript
+        run: pnpm build
+
+      - name: Upload userscript artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: 115master-v2-userscript
+          path: |
+            apps/monkey/dist/115master.user.js
+            apps/monkey/dist/115master.meta.js

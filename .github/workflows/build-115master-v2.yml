@@ -227,6 +227,22 @@ jobs:
           replaceOnce(
             'apps/monkey/src/components/XPlayer/hooks/useSources.ts',
             [
+              '      await ctx.driver?.switchDriver(',
+              '        playerCoreType ?? getDefaultPlayerCore(source),',
+              '      )',
+            ].join('\n'),
+            [
+              "      const targetPlayerCore = source.displayQuality === 'Ultra'",
+              '        ? PlayerCoreType.AvPlayer',
+              '        : playerCoreType ?? getDefaultPlayerCore(source)',
+              '',
+              '      await ctx.driver?.switchDriver(targetPlayerCore)',
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/useSources.ts',
+            [
               '      ctx.eventMitt.on(EVENTS.ERROR, ([_, err]) => {',
               '        if (err === VIDEO_CATCH_ERROES.VIDEO_TRACK_LOSS) {',
             ].join('\n'),

@@ -83,6 +83,222 @@ jobs:
           )
 
           replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            '  const containerRef = shallowRef<HTMLDivElement | null>(null)',
+            [
+              '  const containerRef = shallowRef<HTMLDivElement | null>(null)',
+              '  /** Firefox 原生视频画面，AvPlayer 仅负责音频 */',
+              '  const nativeVideoRef = shallowRef<HTMLVideoElement | null>(null)',
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            [
+              '  const checkPlayer = () => {',
+              '    if (!playerRef.value) {',
+              "      throw new Error('playerRef is not found')",
+              '    }',
+              '    return playerRef.value',
+              '  }',
+            ].join('\n'),
+            [
+              '  const checkPlayer = () => {',
+              '    if (!playerRef.value) {',
+              "      throw new Error('playerRef is not found')",
+              '    }',
+              '    return playerRef.value',
+              '  }',
+              '  const checkNativeVideo = () => {',
+              '    if (!nativeVideoRef.value) {',
+              "      throw new Error('nativeVideoRef is not found')",
+              '    }',
+              '    return nativeVideoRef.value',
+              '  }',
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            [
+              '        })',
+              '        const player = new AVPlayer({',
+            ].join('\n'),
+            [
+              '        })',
+              '        const nativeVideo = document.createElement(\'video\')',
+              '        nativeVideo.muted = true',
+              '        nativeVideo.playsInline = true',
+              "        nativeVideo.preload = 'auto'",
+              "        nativeVideo.style.width = '100%'",
+              "        nativeVideo.style.height = '100%'",
+              "        nativeVideo.style.objectFit = 'contain'",
+              '        container.appendChild(nativeVideo)',
+              '',
+              '        const player = new AVPlayer({',
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            [
+              '        containerRef.value = container',
+              '        playerRef.value = player',
+            ].join('\n'),
+            [
+              '        containerRef.value = container',
+              '        nativeVideoRef.value = nativeVideo',
+              '        playerRef.value = player',
+              '        nativeVideo.addEventListener(\'loadedmetadata\', () => {',
+              '          state.videoWidth.value = nativeVideo.videoWidth',
+              '          state.videoHeight.value = nativeVideo.videoHeight',
+              '        })',
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            [
+              '        player.on(AVPlayerEvents.TIME, (pts) => {',
+              '          if (seeking)',
+              '            return',
+              '          state.currentTime.value = Number(pts) / 1000',
+              '          ctx.eventMitt.emit(EVENTS.TIMEUPDATE, ctx)',
+              '        })',
+            ].join('\n'),
+            [
+              '        player.on(AVPlayerEvents.TIME, (pts) => {',
+              '          if (seeking)',
+              '            return',
+              '          const currentTime = Number(pts) / 1000',
+              '          const nativeVideo = nativeVideoRef.value',
+              '          state.currentTime.value = currentTime',
+              '          if (nativeVideo && Math.abs(nativeVideo.currentTime - currentTime) > 0.35)',
+              '            nativeVideo.currentTime = currentTime',
+              '          ctx.eventMitt.emit(EVENTS.TIMEUPDATE, ctx)',
+              '        })',
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            [
+              '      const player = checkPlayer()',
+              '      await player',
+              '        .load(url, {',
+            ].join('\n'),
+            [
+              '      const player = checkPlayer()',
+              '      const nativeVideo = checkNativeVideo()',
+              '      nativeVideo.src = url',
+              '      nativeVideo.load()',
+              '      await player',
+              '        .load(url, {',
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            [
+              '    getRenderElement: () => {',
+              '      return (',
+              "        containerRef.value?.querySelector('canvas')",
+              "        ?? containerRef.value?.querySelector('video')",
+              '        ?? null',
+              '      )',
+              '    },',
+            ].join('\n'),
+            [
+              '    getRenderElement: () => {',
+              '      return nativeVideoRef.value',
+              '    },',
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            [
+              '        .play({',
+              '          subtitle: false,',
+              '        })',
+              '        .then(async () => {',
+            ].join('\n'),
+            [
+              '        .play({',
+              '          audio: true,',
+              '          video: false,',
+              '          subtitle: false,',
+              '        })',
+              '        .then(async () => {',
+              '          await checkNativeVideo().play()',
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            [
+              '    pause: () => {',
+              '      const player = checkPlayer()',
+              '      state.paused.value = true',
+              '      return player.pause()',
+              '    },',
+            ].join('\n'),
+            [
+              '    pause: async () => {',
+              '      const player = checkPlayer()',
+              '      state.paused.value = true',
+              '      checkNativeVideo().pause()',
+              '      await player.pause()',
+              '    },',
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            [
+              '      state.playbackRate.value = rate',
+              '      player.setPlaybackRate(Math.min(rate, 2))',
+            ].join('\n'),
+            [
+              '      state.playbackRate.value = rate',
+              '      checkNativeVideo().playbackRate = rate',
+              '      player.setPlaybackRate(Math.min(rate, 2))',
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            [
+              '      await player.seek(BigInt(Math.floor(time * 1000)))',
+              '      await nextTick()',
+            ].join('\n'),
+            [
+              '      await player.seek(BigInt(Math.floor(time * 1000)))',
+              '      checkNativeVideo().currentTime = time',
+              '      await nextTick()',
+            ].join('\n'),
+          )
+
+          replaceOnce(
+            'apps/monkey/src/components/XPlayer/hooks/playerCore/useAvPlayerCore.ts',
+            [
+              '      playerRef.value = null',
+              '      return Promise.resolve()',
+            ].join('\n'),
+            [
+              '      playerRef.value = null',
+              '      if (nativeVideoRef.value) {',
+              '        nativeVideoRef.value.pause()',
+              "        nativeVideoRef.value.src = ''",
+              '        nativeVideoRef.value.load()',
+              '        nativeVideoRef.value.remove()',
+              '      }',
+              '      nativeVideoRef.value = null',
+              '      return Promise.resolve()',
+            ].join('\n'),
+          )
+
+          replaceOnce(
             'apps/monkey/src/components/XPlayer/hooks/playerCore/useCatchVideo.ts',
             [
               '    if (!el)',

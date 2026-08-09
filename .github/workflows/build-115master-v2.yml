@@ -53,6 +53,26 @@ jobs:
           }
 
           fs.writeFileSync(file, source.replace(before, after))
+
+          const nativeFile = 'apps/monkey/src/components/XPlayer/hooks/playerCore/useNativePlayerCore.ts'
+          const nativeSource = fs.readFileSync(nativeFile, 'utf8')
+          const nativeBefore = `  useCatchVideoFramedDropped(renderElementRef, (error) => {
+    eventMitt.emit(EVENTS.ERROR, [_ctx, error])
+  })`
+          const nativeAfter = `  useCatchVideoFramedDropped(renderElementRef, (error) => {
+    if (navigator.userAgent.toLowerCase().includes('firefox')) {
+      _ctx.logger.warn('Ignore Firefox frame-drop probe error:', error)
+      return
+    }
+
+    eventMitt.emit(EVENTS.ERROR, [_ctx, error])
+  })`
+
+          if (!nativeSource.includes(nativeBefore)) {
+            throw new Error('Firefox native frame-drop suppression target not found')
+          }
+
+          fs.writeFileSync(nativeFile, nativeSource.replace(nativeBefore, nativeAfter))
           NODE
 
       - name: Install dependencies

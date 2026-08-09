@@ -24,6 +24,34 @@ jobs:
           corepack enable
           corepack prepare pnpm@9.15.9 --activate
 
+      - name: Apply Firefox playback compatibility patch
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs')
+
+          const file = 'apps/monkey/src/components/XPlayer/hooks/playerCore/useCatchVideo.ts'
+          const source = fs.readFileSync(file, 'utf8')
+
+          const before = `    if (metadata.processingDuration === undefined) {
+                errCount++`
+
+          const after = `    const isFirefox = navigator.userAgent.toLowerCase().includes('firefox')
+              if (isFirefox && metadata.processingDuration === undefined) {
+                logger.warn('Firefox does not provide reliable processingDuration metadata; ignore this frame-drop probe.', metadata)
+                checkDroppedFrames()
+                return
+              }
+
+              if (metadata.processingDuration === undefined) {
+                errCount++`
+
+          if (!source.includes(before)) {
+            throw new Error('Firefox playback patch target not found')
+          }
+
+          fs.writeFileSync(file, source.replace(before, after))
+          NODE
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
